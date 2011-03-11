@@ -1,0 +1,26 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sort", "sort.vcproj", "{DB0DE200-0257-4E69-82C9-2AD9BC4F148B}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "memman", "..\memman\memman.vcproj", "{CC1AE68D-D90D-487B-8988-8841E1467B10}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{DB0DE200-0257-4E69-82C9-2AD9BC4F148B}.Debug|Win32.ActiveCfg = Debug|Win32
+		{DB0DE200-0257-4E69-82C9-2AD9BC4F148B}.Debug|Win32.Build.0 = Debug|Win32
+		{DB0DE200-0257-4E69-82C9-2AD9BC4F148B}.Release|Win32.ActiveCfg = Release|Win32
+		{DB0DE200-0257-4E69-82C9-2AD9BC4F148B}.Release|Win32.Build.0 = Release|Win32
+		{CC1AE68D-D90D-487B-8988-8841E1467B10}.Debug|Win32.ActiveCfg = Debug|Win32
+		{CC1AE68D-D90D-487B-8988-8841E1467B10}.Debug|Win32.Build.0 = Debug|Win32
+		{CC1AE68D-D90D-487B-8988-8841E1467B10}.Release|Win32.ActiveCfg = Release|Win32
+		{CC1AE68D-D90D-487B-8988-8841E1467B10}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
