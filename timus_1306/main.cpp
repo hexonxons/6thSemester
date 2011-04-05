@@ -11,7 +11,7 @@ int main(int argc, char **argv)
 	unsigned int num;
 	unsigned int i;
 	unsigned int tmp;
-	
+
 	cin >> num;
 	for(i = 0; i < num / 2 + 1; ++i)
 	{
@@ -27,7 +27,7 @@ int main(int argc, char **argv)
 			arr.push(tmp);
 		}
 	}
-	
+
 	if(num % 2)
 	{
 		cout.setf(ios::fixed);
