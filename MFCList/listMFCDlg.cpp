@@ -98,6 +98,8 @@ HCURSOR CListMFCDlg::OnQueryDragIcon()
 
 void CListMFCDlg::OnBnClickedAddbegbtn()
 {
+	Data elem;
+	Data *pRes = NULL;
 	if(!UpdateData(true))
 		return;
 	if(m_sFio.IsEmpty())
@@ -110,9 +112,16 @@ void CListMFCDlg::OnBnClickedAddbegbtn()
 		MessageBox(L"Вы забыли заполнить поле заказа!", L"Error", MB_ICONERROR | MB_OK);
 		return;
 	}
+	elem.m_FIO = m_sFio;
+	elem.m_Purchase = m_sPurchase;
+	pRes = m_memStorage.Add(elem);
 	// добавляем в хранилище
-	m_memStorage.Add(m_sFio + ' ' + m_sPurchase);
-	m_list.AddToBegin(m_memStorage.End().Current());
+	if (pRes == NULL)
+	{
+		MessageBox(L"Внутренняя ошибка программы.", L"Error mem .Add", MB_ICONERROR | MB_OK);
+		return;
+	}
+	m_list.AddToBegin(pRes);
 	// очистка полей ввода
 	m_sFio.Empty();
 	m_sPurchase.Empty();
@@ -121,6 +130,8 @@ void CListMFCDlg::OnBnClickedAddbegbtn()
 
 void CListMFCDlg::OnBnClickedAddendbtn()
 {
+	Data elem;
+	Data *pRes = NULL;
 	if(!UpdateData(true))
 		return;
 	if(m_sFio.IsEmpty())
@@ -133,9 +144,16 @@ void CListMFCDlg::OnBnClickedAddendbtn()
 		MessageBox(L"Вы забыли заполнить поле заказа!", L"Error", MB_ICONERROR | MB_OK);
 		return;
 	}
+	elem.m_FIO = m_sFio;
+	elem.m_Purchase = m_sPurchase;
+	pRes = m_memStorage.Add(elem);
 	// добавляем в хранилище
-	m_memStorage.Add(m_sFio + ' ' + m_sPurchase);
-	m_list.AddToEnd(m_memStorage.End().Current());
+	if (pRes == NULL)
+	{
+		MessageBox(L"Внутренняя ошибка программы.", L"Error mem .Add", MB_ICONERROR | MB_OK);
+		return;
+	}
+	m_list.AddToEnd(pRes);
 	// очистка полей ввода
 	m_sFio.Empty();
 	m_sPurchase.Empty();
@@ -155,10 +173,11 @@ void CListMFCDlg::OnBnClickedDelendbtn()
 void CListMFCDlg::OnBnClickedDebugstoragebtn()
 {
 	m_OutListBox.ResetContent();
-	for(CBasicDataBase<CString>::Iterator i = m_memStorage.Begin(); i.isValid(); i.Next())
+	for(CBasicDataBase<Data>::Iterator i = m_memStorage.Begin(); i.isValid(); i.Next())
 	{
-		CString *str = i.Current();
-		m_OutListBox.AddString(*str);
+		Data *elem = i.Current();
+		CString str = elem->m_FIO + L" " + elem->m_Purchase;
+		m_OutListBox.AddString(str);
 		UpdateData(false);
 	}
 }
@@ -166,10 +185,11 @@ void CListMFCDlg::OnBnClickedDebugstoragebtn()
 void CListMFCDlg::OnBnClickedListbtn()
 {
 	m_OutListBox.ResetContent();
-	for(CMyList<CString>::Iterator i = m_list.Begin(); i.isValid(); i.Next())
+	for(CMyList<Data>::Iterator i = m_list.Begin(); i.isValid(); i.Next())
 	{
-		CString *str = i.Current();
-		m_OutListBox.AddString(*str);
+		Data *elem = i.Current();
+		CString str = elem->m_FIO + L" " + elem->m_Purchase;
+		m_OutListBox.AddString(str);
 		UpdateData(false);
 	}
 }

@@ -78,6 +78,7 @@ public:
 			newElem->pElem = elem;
 			newElem->pPrev = NULL;
 			newElem->pNext = m_pBegin;
+			m_pBegin->pPrev = newElem;
 			m_pBegin = newElem;
 		}
 		return 0;
@@ -106,6 +107,7 @@ public:
 			newElem->pPrev = m_pEnd;
 			m_pEnd->pNext = newElem;
 			newElem->pNext = NULL;
+			newElem->pPrev = m_pEnd;
 			m_pEnd = newElem;
 		}
 		return 0;

@@ -6,6 +6,12 @@
 #include "memAlloc.h"
 #include "list.h"
 
+struct Data
+{
+	CString m_FIO;
+	CString m_Purchase;
+};
+
 // CListMFCDlg dialog
 class CListMFCDlg : public CDialog
 {
@@ -34,9 +40,9 @@ private:
 	CString m_sPurchase;
 	CString m_sFio;
 	// класс с хранением данных
-	CBasicDataBase<CString> m_memStorage;
+	CBasicDataBase<Data> m_memStorage;
 	// класс списка
-	CMyList<CString> m_list;
+	CMyList<Data> m_list;
 	// итератор на последний добавленный в хранилище элемент
 	//CBasicDataBase<CString>::Iterator m_IterToEnd;
 public:
