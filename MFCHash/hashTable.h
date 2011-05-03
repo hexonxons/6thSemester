@@ -1,11 +1,9 @@
 #pragma once
-#include <iostream>
-#include <functional>
+#include "banned.h"
 #include "memAlloc.h"
-using std::string;
 
 // максимальный ключ
-const unsigned int KEY_SZ = 2;
+const unsigned int KEY_SZ = 100;
 
 template<class T> class CHashTable
 {
@@ -23,6 +21,7 @@ public:
 			m_lastError = -1;
 		else
 		{
+			// зануляем таблицу
 			memset(m_pTable, 0, KEY_SZ * sizeof(struct STableElem));
 			m_lastError = 0;
 		}
@@ -39,47 +38,97 @@ public:
 	typedef int (CalcHash)(T *pElem);
 
 	// функция добавления элемента в хэш-таблицу
-	int AddElem(T *pElemToAdd, Compare compareFunction, CalcHash calcHashFunction)
+	int AddElem(T *pElem, Compare compareFunction, CalcHash calcHashFunction)
 	{
-		unsigned int curHash = 0;
+		unsigned int hash = 0;
 		// указатель, куда надо вставлять
-		STableElem *pointerToInsert;
+		STableElem *ptr;
 		STableElem *pTemp;
 		STableElem elem;
 
-		elem.pElem = pElemToAdd;
+		elem.pElem = pElem;
 		elem.pNext = NULL;
 
-		curHash = calcHashFunction(pElemToAdd) % KEY_SZ;
-		if(m_pTable[curHash].pElem == NULL)
-			m_pTable[curHash].pElem = pElemToAdd;
+		hash = calcHashFunction(pElem) % KEY_SZ;
+		if(m_pTable[hash].pElem == NULL)
+			m_pTable[hash].pElem = pElem;
 		else
 		{
-			pTemp = &m_pTable[curHash];
-			pointerToInsert = m_pTable[curHash].pNext;
+			pTemp = &m_pTable[hash];
+			ptr = m_pTable[hash].pNext;
 			// если такой ключ уже есть, то возвращаем 2
-			if(compareFunction(pTemp->pElem, pElemToAdd) == 0)
+			if(compareFunction(pTemp->pElem, pElem) == 0)
 			{
 				m_lastError = 2;
 				return 2;
 			}
-			while(pointerToInsert != NULL)
+			while(ptr != NULL)
 			{
-				pointerToInsert = pointerToInsert->pNext;
+				ptr = ptr->pNext;
 				// если такой ключ уже есть, то возвращаем 2
-				if(compareFunction(pTemp->pElem, pElemToAdd) == 0)
+				if(compareFunction(pTemp->pElem, pElem) == 0)
 				{
 					m_lastError = 2;
 					return 2;
 				}
 				pTemp = pTemp->pNext;
 			}
-			pointerToInsert = m_externalPointersStorage.Add(elem);
+			ptr = m_externalPointersStorage.Add(elem);
 			// добавление в массив указаделей дополнительных выделенных кусков памяти
 			//m_ptrToExternalPointers.Add(ptrToIns);
-			pTemp->pNext = pointerToInsert;
+			pTemp->pNext = ptr;
 		}
 		return 0;
+	}
+
+	// функция удаления элемента по ключу
+	int DelElem(T* pElem, Compare compareFunction, CalcHash calcHashFunction)
+	{
+		unsigned int hash;
+		STableElem *ptr;
+		STableElem *pTemp;
+
+		hash = calcHashFunction(pElem) % KEY_SZ;
+		// получаем указатель на элемент в таблице с хэшем, равным полученному
+		pTemp = &m_pTable[hash];
+		if (pTemp->pElem == NULL)
+		{
+			return 2;
+		}
+
+		if (compareFunction(pTemp->pElem, pElem) != 0)
+		{
+			ptr = m_pTable[hash].pNext;
+			while (compareFunction(ptr->pElem, pElem) != 0)
+			{
+				pTemp = ptr;
+				ptr = ptr->pNext;
+				if (ptr == NULL)
+				{
+					m_lastError = 2;
+					return 2;
+				}
+			}
+			pTemp->pNext = ptr->pNext;
+			pTemp->pElem = ptr->pElem;
+			return 0;
+		}
+		if (compareFunction(pTemp->pElem, pElem) == 0)
+		{
+			if (m_pTable[hash].pNext != NULL)
+			{
+				m_pTable[hash].pElem = m_pTable[hash].pNext->pElem;
+				m_pTable[hash].pNext = m_pTable[hash].pNext->pNext;
+			}
+			else
+			{
+				m_pTable[hash].pElem = NULL;
+				m_pTable[hash].pNext = NULL;
+			}
+			return 0;
+		}
+
+		return -1;
 	}
 
 	int getLastError()
@@ -107,6 +156,7 @@ public:
 		}
 		return pCurrent->pElem;
 	}
+
 private:
 	
 	STableElem *m_pTable;

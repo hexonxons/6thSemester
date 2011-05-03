@@ -20,6 +20,7 @@ CMFCHashDlg::CMFCHashDlg(CWnd* pParent /*=NULL*/)
 	, m_Key(_T(""))
 	, m_Value(_T(""))
 	, m_SearchValue(_T(""))
+	, m_DelValue(_T(""))
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -31,6 +32,7 @@ void CMFCHashDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_VALUE, m_Value);
 	DDX_Text(pDX, IDC_KEYSEARCH, m_SearchValue);
 	DDX_Control(pDX, IDC_LSTOUT, m_OutputList);
+	DDX_Text(pDX, IDC_KEYDEL, m_DelValue);
 }
 
 BEGIN_MESSAGE_MAP(CMFCHashDlg, CDialog)
@@ -39,6 +41,7 @@ BEGIN_MESSAGE_MAP(CMFCHashDlg, CDialog)
 	//}}AFX_MSG_MAP
 	ON_BN_CLICKED(IDC_BTNADD, &CMFCHashDlg::OnBnClickedBtnadd)
 	ON_BN_CLICKED(IDC_BTNFIND, &CMFCHashDlg::OnBnClickedBtnfind)
+	ON_BN_CLICKED(IDC_BTNDEL, &CMFCHashDlg::OnBnClickedBtndel)
 END_MESSAGE_MAP()
 
 
@@ -102,7 +105,7 @@ int compare(Data *pLeft, Data *pRight)
 // функция вычисления хэша по строке
 int calcHash(Data *pElem)
 {
-	unsigned int i;
+	int i;
 	unsigned int hash = 0;
 	for(i = 0; i < pElem->key.GetLength(); i++)
 		hash += pElem->key[i];
@@ -168,5 +171,29 @@ void CMFCHashDlg::OnBnClickedBtnfind()
 		m_OutputList.AddString(retVal->value);	
 	else
 		m_OutputList.AddString("0 elem found.");
+	UpdateData(FALSE);
+}
+
+void CMFCHashDlg::OnBnClickedBtndel()
+{
+	int i = 0;
+	Data elem;
+	if(!UpdateData(TRUE))
+		return;
+
+	if(m_DelValue.IsEmpty())
+	{
+		AfxMessageBox("Вы забыли заполнить поле ключа для удаления!");
+		return;
+	}
+	m_OutputList.ResetContent();
+
+	// выделяем память на структуру данных
+	elem.key = m_DelValue;
+
+	if(table.DelElem(&elem, compare, calcHash) != 0)
+		m_OutputList.AddString("No elements found");
+
+	m_DelValue.Empty();
 	UpdateData(FALSE);
 }

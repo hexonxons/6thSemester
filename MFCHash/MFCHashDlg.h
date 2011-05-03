@@ -41,6 +41,8 @@ private:
 	CString m_Key;
 	CString m_Value;
 	CString m_SearchValue;
+	CListBox m_OutputList;
+	CString m_DelValue;
 	// хэш ничего не знает о том, где лежат данные
 	// хэш - hashTable.h
 	// а это - интерфейс. Ему знать можно
@@ -54,5 +56,6 @@ private:
 	// Хранилище
 	CBasicDataBase<Data> m_DataStorage;
 	CHashTable<Data> table;
-	CListBox m_OutputList;
+public:
+	afx_msg void OnBnClickedBtndel();
 };

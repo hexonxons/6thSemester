@@ -1,7 +1,8 @@
 #pragma once
+#include "banned.h"
 
 // размер блока
-const int BLOCK_SIZE = 3;
+const int BLOCK_SIZE = 10;
 
 template<class T> class CBasicDataBase
 {
