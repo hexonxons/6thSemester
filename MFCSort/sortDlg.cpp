@@ -299,7 +299,6 @@ Sort1 **merge(Sort1 **left, Sort1 **right, unsigned int leftSz, unsigned int rig
 			++resPtr;			
 		}			
 	}
-
 	return result;
 }
 
@@ -308,6 +307,8 @@ Sort1 **mergesort(Sort1 **arr, unsigned int arrSz, CompareSort1Type compareFunc)
 	Sort1 **result;
 	Sort1 **left;
 	Sort1 **right;
+	Sort1 **tmpLeft;
+	Sort1 **tmpRight;
 	if(arrSz <= 1)
 		return arr;
 	else
@@ -330,12 +331,21 @@ Sort1 **mergesort(Sort1 **arr, unsigned int arrSz, CompareSort1Type compareFunc)
 				left[i] = arr[i];
 				right[i] = arr[arrSz - middle + i];
 			}
-		left = mergesort(left, middle, compareFunc);
-		right = mergesort(right, arrSz - middle, compareFunc);
-		result = merge(left, right, middle, arrSz - middle, compareFunc);
+		tmpLeft = mergesort(left, middle, compareFunc);
+		tmpRight = mergesort(right, arrSz - middle, compareFunc);
+		result = merge(tmpLeft, tmpRight, middle, arrSz - middle, compareFunc);
+		if(tmpLeft != left)
+			free(tmpLeft);
+		if(tmpRight != right)
+			free(tmpRight);
+
+		free(left);
+		left = NULL;
+		free(right);
+		right = NULL;
+		tmpLeft = NULL;
+		tmpRight = NULL;
 	}	
-	free(left);
-	free(right);
 	return result;
 }
 

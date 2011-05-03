@@ -5,24 +5,27 @@
 using std::string;
 
 // максимальный ключ
-const unsigned int KEY_SZ = 100;
+const unsigned int KEY_SZ = 2;
 
 template<class T> class CHashTable
 {
 public:
 	struct STableElem
 	{
-		struct STableElem *m_pPrev;
-		struct STableElem *m_pNext;
-		T *m_pElem;
-		T *m_pKey;
+		struct STableElem *pNext;
+		T *pElem;
 	};
 
 	CHashTable()
 	{
 		m_pTable = new STableElem[KEY_SZ];
-		memset(m_pTable, 0, KEY_SZ * sizeof(struct STableElem));
-		m_lastError = 0;
+		if (!m_pTable)
+			m_lastError = -1;
+		else
+		{
+			memset(m_pTable, 0, KEY_SZ * sizeof(struct STableElem));
+			m_lastError = 0;
+		}
 	}
 
 	virtual ~CHashTable()
@@ -32,45 +35,49 @@ public:
 
 	// функция сравнения
 	typedef  int (Compare)(T *pElem1, T *pElem2);
+	// функция вычисления хэша по строке
+	typedef int (CalcHash)(T *pElem);
+
 	// функция добавления элемента в хэш-таблицу
-	// keyWord - ключевой элемент. По нему считается хэш
-	// также он добавляется в хранилище
-	// element - значение, соответствующее keyWord
-	int AddElem(STableElem *pElemToAdd, Compare compareFunction)
+	int AddElem(T *pElemToAdd, Compare compareFunction, CalcHash calcHashFunction)
 	{
 		unsigned int curHash = 0;
+		// указатель, куда надо вставлять
 		STableElem *pointerToInsert;
 		STableElem *pTemp;
-		curHash = calcHash(pElemToAdd->m_pKey, KEY_SZ);
-		if(m_pTable[curHash].m_pElem == NULL)
-			m_pTable[curHash] = *pElemToAdd;
+		STableElem elem;
+
+		elem.pElem = pElemToAdd;
+		elem.pNext = NULL;
+
+		curHash = calcHashFunction(pElemToAdd) % KEY_SZ;
+		if(m_pTable[curHash].pElem == NULL)
+			m_pTable[curHash].pElem = pElemToAdd;
 		else
 		{
 			pTemp = &m_pTable[curHash];
-			pointerToInsert = m_pTable[curHash].m_pNext;
+			pointerToInsert = m_pTable[curHash].pNext;
 			// если такой ключ уже есть, то возвращаем 2
-			if(compareFunction(pTemp->m_pKey, pElemToAdd->m_pKey) == 0)
+			if(compareFunction(pTemp->pElem, pElemToAdd) == 0)
 			{
 				m_lastError = 2;
 				return 2;
 			}
 			while(pointerToInsert != NULL)
 			{
-				pointerToInsert = pointerToInsert->m_pNext;
+				pointerToInsert = pointerToInsert->pNext;
 				// если такой ключ уже есть, то возвращаем 2
-				if(pTemp->m_pKey == pElemToAdd->m_pKey)
+				if(compareFunction(pTemp->pElem, pElemToAdd) == 0)
 				{
 					m_lastError = 2;
 					return 2;
 				}
-				pTemp = pTemp->m_pNext;
+				pTemp = pTemp->pNext;
 			}
-			pointerToInsert = pElemToAdd;
+			pointerToInsert = m_externalPointersStorage.Add(elem);
 			// добавление в массив указаделей дополнительных выделенных кусков памяти
 			//m_ptrToExternalPointers.Add(ptrToIns);
-			pointerToInsert->m_pPrev  = pTemp;
-			pointerToInsert->m_pNext = NULL;
-			pTemp->m_pNext = pointerToInsert;
+			pTemp->pNext = pointerToInsert;
 		}
 		return 0;
 	}
@@ -83,37 +90,27 @@ public:
 	}
 
 	// функция поиска элемента по ключу
-	T *FindElem(T* pKeyWord, Compare compareFunction)
+	T *FindElem(T* pKeyWord, Compare compareFunction, CalcHash calcHashFunction)
 	{
 		int i = 0;
-		int hash = calcHash(pKeyWord, KEY_SZ);
+		int hash = calcHashFunction(pKeyWord) % KEY_SZ;
 		STableElem *pCurrent = &m_pTable[hash];
 		int count = 1;
-		if (pCurrent->m_pElem == NULL)
+		if (pCurrent->pElem == NULL)
 			return NULL;
 
-		while (compareFunction(pCurrent->m_pKey, pKeyWord))
+		while (compareFunction(pCurrent->pElem, pKeyWord))
 		{
-			pCurrent = pCurrent->m_pNext;
+			pCurrent = pCurrent->pNext;
 			if (pCurrent == NULL)
 				return NULL;
 		}
-		return pCurrent->m_pElem;
+		return pCurrent->pElem;
 	}
 private:
-	// функция вычисления хэша по строке
-	int calcHash(string *pElem, const unsigned int keySz)
-	{
-		unsigned int i;
-		unsigned int hash = 0;
-		for(i = 0; i < pElem->size(); i++)
-			hash += pElem->at(i);
-		return hash % keySz;
-	}
-	// хэш таблица
-	struct STableElem *m_pTable;
-	// Хранилище
-	CBasicDataBase<T> m_memStorage;
+	
+	STableElem *m_pTable;
+	CBasicDataBase<STableElem> m_externalPointersStorage;
 	// Хранилище указателей на дополнительно выделенные элементы
 	// в случае коллизии
 	//CArray <STableElem *> m_ptrToExternalPointers;

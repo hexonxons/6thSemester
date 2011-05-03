@@ -9,41 +9,40 @@ private:
 	// структура блока данных
 	struct Storage
 	{
-		T		*m_pStorageData;
-		Storage *m_pStorageNext;
-		Storage *m_pStoragePrev;
+		T		*pData;
+		Storage *pNext;
 	};
 
 public:
 	class Iterator
 	{
 	public:
-		Iterator(Storage *pData, unsigned int elemCount)
+		Iterator(CBasicDataBase *elem)
 		{
-			m_pData = pData;
+			m_pData = elem->m_pBegin;
 			m_posInBlock = 0;
 			m_blockNum = 0;
-			m_elemCount = elemCount;
+			m_elemCount = elem->m_elemCount;
 		}
 
 		T *Next()
 		{
 			++m_posInBlock;
-			if (m_posInBlock == BLOCK_SIZE && m_pData->m_pStorageNext != NULL)
+			if (m_posInBlock == BLOCK_SIZE && m_pData->pNext != NULL)
 			{
 				m_posInBlock = 0;
-				m_pData = m_pData->m_pStorageNext;
+				m_pData = m_pData->pNext;
 				++m_blockNum;
 			}
-			return m_pData->m_pStorageData + m_posInBlock;
+			return m_pData->pData + m_posInBlock;
 		}
 
 		T *Current()
 		{
-			return m_pData->m_pStorageData + m_posInBlock;
+			return m_pData->pData + m_posInBlock;
 		}
 
-		int isValid()
+		bool isValid()
 		{
 			return(m_blockNum * BLOCK_SIZE + m_posInBlock != m_elemCount);
 		}
@@ -83,23 +82,23 @@ public:
 	{
 		if (m_pData != NULL)
 		{
-			// перематываем на самый последний блок
-			while (m_pData->m_pStorageNext != NULL)
-				m_pData = m_pData->m_pStorageNext;
-			// возвращаемся на блок назад и удаляем текущий
-			while(m_pData->m_pStoragePrev)
+			Storage *pTmp;
+			m_pData = m_pBegin;
+			// идем на блок вперед и удаляем предыдущий
+			while(m_pData->pNext)
 			{
-				m_pData = m_pData->m_pStoragePrev;
-				if(m_pData->m_pStorageNext->m_pStorageData)
+				pTmp = m_pData;
+				m_pData = m_pData->pNext;
+				if(pTmp->pData)
 				{
-					delete[] m_pData->m_pStorageNext->m_pStorageData;
-					m_pData->m_pStorageNext->m_pStorageData = NULL;
+					delete[] pTmp->pData;
+					pTmp->pData = NULL;
 				}
-				delete m_pData->m_pStorageNext;
-				m_pData->m_pStorageNext = NULL;
+				delete pTmp;
+				pTmp = NULL;
 			}
-			delete[] m_pData->m_pStorageData;
-			m_pData->m_pStorageData = NULL;
+			delete[] m_pData->pData;
+			m_pData->pData = NULL;
 			delete m_pData;
 			m_pData = NULL;
 			m_pBegin = NULL;
@@ -116,24 +115,18 @@ public:
 			{
 				m_pData = new Storage;
 				m_pBegin = m_pData;
-				if(m_pData)
-				{
-					m_pData->m_pStoragePrev = NULL;
-				}
 			}
 			else
 			{
 				// если не первый блок, то выделяем память на следующий блок
-				m_pData->m_pStorageNext = new Storage;
-				// делаем указатель назад
-				m_pData->m_pStorageNext->m_pStoragePrev = m_pData;
+				m_pData->pNext = new Storage;
 				// переставляем указатель на новый блок
-				m_pData = m_pData->m_pStorageNext;
+				m_pData = m_pData->pNext;
 
 			}		
 			// выделяем память в блоке на BLOCK_SIZE элементов
-			m_pData->m_pStorageData = new T[BLOCK_SIZE];
-			m_pData->m_pStorageNext = NULL;
+			m_pData->pData = new T[BLOCK_SIZE];
+			m_pData->pNext = NULL;
 			// помечаем все элементы как свободные
 			m_freeBlockNum = BLOCK_SIZE;
 			// увеличиваем число блоков 
@@ -141,23 +134,15 @@ public:
 
 		}
 		// добавляем
-		m_pData->m_pStorageData[BLOCK_SIZE - m_freeBlockNum] = elem;
+		m_pData->pData[BLOCK_SIZE - m_freeBlockNum] = elem;
 		--m_freeBlockNum;
 		++m_elemCount;
-		return &elem;
+		return m_pData->pData + BLOCK_SIZE - m_freeBlockNum - 1;
 	}
 
 	Iterator Begin()
 	{
-		return Iterator(m_pBegin, m_elemCount);
-	}
-
-	T* LastValuePointer()
-	{
-		unsigned int counter = m_elemCount;
-		if (m_blockCount > 1)
-			counter = m_elemCount - (m_blockCount - 1) * BLOCK_SIZE;
-		return m_pData->m_pStorageData + counter - 1;
+		return Iterator(this);
 	}
 
 private:

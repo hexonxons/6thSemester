@@ -94,16 +94,24 @@ HCURSOR CMFCHashDlg::OnQueryDragIcon()
 	return static_cast<HCURSOR>(m_hIcon);
 }
 
-int compare(string *pLeft, string *pRight)
+int compare(Data *pLeft, Data *pRight)
 {
-	return strcmp(pLeft->c_str(), pRight->c_str());
+	return strcmp(pLeft->key, pRight->key);
 }
+
+// функция вычисления хэша по строке
+int calcHash(Data *pElem)
+{
+	unsigned int i;
+	unsigned int hash = 0;
+	for(i = 0; i < pElem->key.GetLength(); i++)
+		hash += pElem->key[i];
+	return hash;
+}
+
 void CMFCHashDlg::OnBnClickedBtnadd()
 {
-
-	string key;
-	string value;
-	CHashTable<string>::STableElem newElem;
+	Data elem;
 
 	if(!UpdateData(TRUE))
 		return;
@@ -118,19 +126,14 @@ void CMFCHashDlg::OnBnClickedBtnadd()
 		AfxMessageBox("Вы забыли заполнить поле значения!");
 		return;
 	}
-	key = m_Key.GetString();
-	value = m_Value.GetString();
-	newElem.m_pNext = NULL;
-	newElem.m_pPrev = NULL;
-	// выделяем память на строчки структуры
-	m_stringStorage.Add(key);
-	newElem.m_pKey = m_stringStorage.LastValuePointer();
-	m_stringStorage.Add(value);
-	newElem.m_pElem = m_stringStorage.LastValuePointer();
-	// выделили память на структуру
-	m_memStorage.Add(newElem);
 
-	table.AddElem(m_memStorage.LastValuePointer(), compare);
+
+	elem.key = m_Key;
+	elem.value = m_Value;
+	// выделяем память на структуру данных
+	//m_DataStorage.Add(elem);
+
+	table.AddElem(m_DataStorage.Add(elem), compare, calcHash);
 	if (table.getLastError() == 2)
 	{
 		AfxMessageBox("Значение с таким ключом уже существует!");
@@ -144,8 +147,8 @@ void CMFCHashDlg::OnBnClickedBtnadd()
 void CMFCHashDlg::OnBnClickedBtnfind()
 {
 	int i = 0;
-	string key;
-	string *pRetValue;
+	Data elem;
+	Data *retVal;
 	if(!UpdateData(TRUE))
 		return;
 
@@ -155,11 +158,14 @@ void CMFCHashDlg::OnBnClickedBtnfind()
 		return;
 	}
 	m_OutputList.ResetContent();
-	key = m_SearchValue.GetString();
-	pRetValue = table.FindElem(&key, compare);
+
+	// выделяем память на структуру данных
+	elem.key = m_SearchValue;
+
+	retVal = table.FindElem(&elem, compare, calcHash);
 	m_SearchValue.Empty();
-	if (pRetValue != NULL)
-		m_OutputList.AddString(pRetValue->c_str());	
+	if (retVal != NULL)
+		m_OutputList.AddString(retVal->value);	
 	else
 		m_OutputList.AddString("0 elem found.");
 	UpdateData(FALSE);

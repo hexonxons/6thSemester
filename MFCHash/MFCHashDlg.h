@@ -5,7 +5,11 @@
 #include "hashTable.h"
 #include "afxwin.h"
 
-
+struct Data
+{
+	CString key;
+	CString value;
+};
 
 // CMFCHashDlg dialog
 class CMFCHashDlg : public CDialog
@@ -40,13 +44,15 @@ private:
 	// хэш ничего не знает о том, где лежат данные
 	// хэш - hashTable.h
 	// а это - интерфейс. Ему знать можно
-	CBasicDataBase<CHashTable<string>::STableElem> m_memStorage; 
+	CBasicDataBase<CHashTable<Data>::STableElem> m_HashStorage; 
 	// а это - хранилище для строчек. 
 	// CHashTable<string>::STableElem * имеет внутри поля
 	// T *elem	и T *key;
 	// и на них тоже надо выделять память. Мой memman не умеет выделять память на внутренние элементы =(
 	// как я понимаю, надо делать так.
-	CBasicDataBase<string> m_stringStorage; 
-	CHashTable<string> table;
+	CBasicDataBase<CString> m_stringStorage; 
+	// Хранилище
+	CBasicDataBase<Data> m_DataStorage;
+	CHashTable<Data> table;
 	CListBox m_OutputList;
 };
