@@ -5,6 +5,7 @@
 #include "sort.h"
 #include "sortDlg.h"
 #include "perfcounter.h"
+#include "../includes/banned.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -257,108 +258,65 @@ int CompareByDate(Sort1 *left, Sort1 *right)
 }
 
 
-Sort1 **merge(Sort1 **left, Sort1 **right, unsigned int leftSz, unsigned int rightSz, CompareSort1Type compareFunc)
+void Heapify(Sort1 **arr, unsigned int top, unsigned int heapSz, CompareSort1Type cmpFunc)
 {
-	Sort1 **result = (Sort1 **)malloc((leftSz + rightSz) * sizeof(Sort1 *));
-	unsigned int rightPtr = 0;
-	unsigned int leftPtr = 0;
-	unsigned int resPtr = 0;
-
-	while(rightPtr < rightSz && leftPtr < leftSz)
+	unsigned int left;
+	unsigned int right;
+	unsigned int largest;
+	Sort1 *temp;
+	
+	left = (top << 1) + 1;	//Left
+	right = left + 1; 		//Right
+	
+	if(left < heapSz && cmpFunc(arr[left], arr[top]) > 0)
+		largest = left;
+	else
+		largest = top;
+		
+	if(right < heapSz && cmpFunc(arr[right], arr[largest]) > 0)
+		largest = right;
+		
+	if(largest != top)
 	{
-		if(compareFunc(left[leftPtr], right[rightPtr]) < 0)
-		{
-			result[resPtr] = left[leftPtr];
-			++leftPtr;
-			++resPtr;
-		}
-		else
-		{
-			result[resPtr] = right[rightPtr];
-			++rightPtr;
-			++resPtr;
-		}
+		temp = arr[top];
+		arr[top] = arr[largest];
+		arr[largest] = temp;
+		Heapify(arr, largest, heapSz, cmpFunc);
 	}
-	if(leftPtr < leftSz)
-	{
-		unsigned int i;
-		for(i = leftPtr; i < leftSz; ++i)
-		{
-			result[resPtr] = left[i];
-			++resPtr;			
-		}
-
-	}
-
-	if(rightPtr < rightSz)
-	{
-		unsigned int i;
-		for(i = rightPtr; i < rightSz; ++i)
-		{
-			result[resPtr] = right[i];
-			++resPtr;			
-		}			
-	}
-	return result;
 }
 
-Sort1 **mergesort(Sort1 **arr, unsigned int arrSz, CompareSort1Type compareFunc)
+void BuildMaxHeap(Sort1 **arr, unsigned int heapSz, CompareSort1Type cmpFunc)
 {
-	Sort1 **result;
-	Sort1 **left;
-	Sort1 **right;
-	Sort1 **tmpLeft;
-	Sort1 **tmpRight;
-	if(arrSz <= 1)
-		return arr;
-	else
+	unsigned int i = heapSz >> 1;
+	while(i > 0)
 	{
-		int middle = arrSz/2;
-		int i;
-		left = (Sort1 **) malloc(middle * sizeof(Sort1 *));
-		right = (Sort1 **) malloc((arrSz - middle) * sizeof(Sort1 *));
-		if(arrSz % 2 != 0)
-		{
-			for(i = 0; i < middle; ++i)
-				left[i] = arr[i];
+		--i;
+		Heapify(arr, i, heapSz, cmpFunc);
+	}
+}
 
-			for(i = 0; i < middle + 1; ++i)
-				right[i] = arr[middle + i];
-		}
-		else
-			for(i = 0; i < middle; ++i)
-			{
-				left[i] = arr[i];
-				right[i] = arr[arrSz - middle + i];
-			}
-		tmpLeft = mergesort(left, middle, compareFunc);
-		tmpRight = mergesort(right, arrSz - middle, compareFunc);
-		result = merge(tmpLeft, tmpRight, middle, arrSz - middle, compareFunc);
-		if(tmpLeft != left)
-			free(tmpLeft);
-		if(tmpRight != right)
-			free(tmpRight);
-
-		free(left);
-		left = NULL;
-		free(right);
-		right = NULL;
-		tmpLeft = NULL;
-		tmpRight = NULL;
-	}	
-	return result;
+Sort1** HeapSort(Sort1 **arr, unsigned int sz, CompareSort1Type cmpFunc)
+{
+	unsigned int i;
+	unsigned int heapSz = sz;
+	Sort1 *temp;
+	
+	BuildMaxHeap(arr, sz, cmpFunc);
+	i = sz;
+	while(i > 0)
+	{
+		--i;
+		--heapSz;
+		temp = arr[i];
+		arr[i] = arr[0];
+		arr[0] = temp;
+		Heapify(arr, 0, heapSz, cmpFunc);
+	}
+	return arr;
 }
 
 ///Сортировка
 void Sort(Sort1Array &array, CompareSort1Type cmpFunc)
 {
-	int i;
-	int sz = array.GetSize();
-	Sort1 **a = mergesort(array.GetData(), sz, cmpFunc);
-	array.RemoveAll();
-
-	for(i = 0; i < sz; ++i)
-		array.Add(a[i]);
-	free(a);
-	a = NULL;
+	HeapSort(array.GetData(), array.GetSize(), cmpFunc);
 }
