@@ -1,6 +1,5 @@
 #pragma once
-#include "banned.h"
-#include "memAlloc.h"
+#include "../includes/memalloc.h"
 
 // максимальный ключ
 const unsigned int KEY_SZ = 100;

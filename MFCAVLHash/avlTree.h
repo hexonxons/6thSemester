@@ -1,7 +1,6 @@
 #pragma once
 
 #include "../includes/memalloc.h"
-#include "../includes/banned.h"
 
 // максимальный ключ
 const unsigned int KEY_SZ = 3;
@@ -298,12 +297,6 @@ private:
                 // если у неё нет детей, то удаляем
                 if (tree->pLeft == NULL && tree->pRight == NULL)
                 {
-                   /* if (tree->pParent->pLeft == tree)
-                        tree->pParent->pLeft = NULL;
-                    else
-                        tree->pParent->pRight = NULL;
-
-                    tree->pParent->height = height(tree->pParent); */
                     tree = NULL;
                     return tree;
                 }

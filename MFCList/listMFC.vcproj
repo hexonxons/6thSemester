@@ -232,10 +232,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\memAlloc.h"
-				>
-			</File>
-			<File
 				RelativePath=".\Resource.h"
 				>
 			</File>

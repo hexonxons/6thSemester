@@ -3,7 +3,7 @@
 
 #pragma once
 #include "afxwin.h"
-#include "memAlloc.h"
+#include "../includes/memalloc.h"
 #include "list.h"
 
 struct Data
