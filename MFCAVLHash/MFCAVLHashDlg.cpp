@@ -14,11 +14,25 @@
 
 
 
+int compare(Data *pLeft, Data *pRight)
+{
+    return strcmp(pLeft->key, pRight->key);
+}
+
+// функция вычисления хэша по строке
+int calcHash(Data *pElem)
+{
+    int i;
+    unsigned int hash = 0;
+    for(i = 0; i < pElem->key.GetLength(); i++)
+        hash += pElem->key[i];
+    return hash;
+}
 
 CMFCAVLHashDlg::CMFCAVLHashDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CMFCAVLHashDlg::IDD, pParent)
-	, m_keyword(_T(""))
-	, m_value(_T(""))
+	, m_Key(_T(""))
+	, m_Value(_T(""))
 	, m_searchKey(_T(""))
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
@@ -27,8 +41,8 @@ CMFCAVLHashDlg::CMFCAVLHashDlg(CWnd* pParent /*=NULL*/)
 void CMFCAVLHashDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
-	DDX_Text(pDX, IDC_KEYWORD, m_keyword);
-	DDX_Text(pDX, IDC_VALUE, m_value);
+	DDX_Text(pDX, IDC_KEYWORD, m_Key);
+	DDX_Text(pDX, IDC_VALUE, m_Value);
 	DDX_Text(pDX, IDC_KEYSEARCH, m_searchKey);
 	DDX_Control(pDX, IDC_LIST, m_outputList);
 }
@@ -37,6 +51,7 @@ BEGIN_MESSAGE_MAP(CMFCAVLHashDlg, CDialog)
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
 	//}}AFX_MSG_MAP
+    ON_BN_CLICKED(IDC_BTNADD, &CMFCAVLHashDlg::OnBnClickedBtnadd)
 END_MESSAGE_MAP()
 
 
@@ -92,3 +107,38 @@ HCURSOR CMFCAVLHashDlg::OnQueryDragIcon()
 	return static_cast<HCURSOR>(m_hIcon);
 }
 
+
+void CMFCAVLHashDlg::OnBnClickedBtnadd()
+{
+    Data elem;
+
+    if(!UpdateData(TRUE))
+        return;
+
+    if(m_Key.IsEmpty())
+    {
+        AfxMessageBox("Вы забыли заполнить поле ключа!");
+        return;
+    }
+    if(m_Value.IsEmpty())
+    {
+        AfxMessageBox("Вы забыли заполнить поле значения!");
+        return;
+    }
+
+
+    elem.key = m_Key;
+    elem.value = m_Value;
+    // выделяем память на структуру данных
+    //m_DataStorage.Add(elem);
+
+    tree.AddElem(m_DataStorage.Add(elem), compare, calcHash);
+    if (tree.getLastError() == 2)
+    {
+        AfxMessageBox("Значение с таким ключом уже существует!");
+        return;
+    }
+    m_Key.Empty();
+    m_Value.Empty();
+    UpdateData(FALSE);
+}
