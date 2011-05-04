@@ -4,7 +4,7 @@
 #include "../includes/banned.h"
 
 // максимальный ключ
-const unsigned int KEY_SZ = 2;
+const unsigned int KEY_SZ = 3;
 
 template<class T> class CAvlTree
 {
@@ -29,6 +29,7 @@ public:
     // функция удаления элемента по ключу
     int DelElem(T* pElem, Compare compareFunction, CalcHash calcHashFunction)
     {
+        m_pRoot = removeNode(m_pRoot, pElem, compareFunction, calcHashFunction);
         return 0;
     }
 
@@ -42,6 +43,33 @@ public:
     // функция поиска элемента по ключу
     T *FindElem(T* pKeyWord, Compare compareFunction, CalcHash calcHashFunction)
     {
+        treeNode *fndElem = findNode(m_pRoot, pKeyWord, calcHashFunction);
+        external *pTmp;
+        // Если не найдено значение, возвращаем NULL
+        if (fndElem == NULL)
+        {
+            return NULL;
+        }
+        pTmp = fndElem->pNext;
+        // Если текущее значение - наше, возвращаем его
+        if (compareFunction(fndElem->pData, pKeyWord) == 0)
+        {
+            return fndElem->pData;
+        }
+        if (pTmp == NULL)
+        {
+            return NULL;
+        }
+        // Если вернулся только указатель на элемент дерева с хэшем
+        while (compareFunction(pTmp->pData, pKeyWord) != 0)
+        {
+            pTmp = pTmp->pNext;
+            if (pTmp == NULL)
+            {
+                return NULL;
+            }
+        }
+        return pTmp->pData;
     }
 
 
@@ -51,7 +79,7 @@ private:
     struct external
     {
         external *pNext;
-        T *m_pData;
+        T *pData;
     };
 
     // структура узла дерева
@@ -110,7 +138,7 @@ private:
             // если external элементов еще нет
             if (pTmp == NULL)
             {
-                newElem.m_pData = pElem;
+                newElem.pData = pElem;
                 newElem.pNext = NULL;
                 tree->pNext = m_ExtStorage.Add(newElem);
                 return tree;
@@ -118,7 +146,7 @@ private:
 
             while (pTmp != NULL)
             {
-                if (compareFunction(pTmp->m_pData, pElem) == 0)
+                if (compareFunction(pTmp->pData, pElem) == 0)
                 {
                     m_lastError = 2;
                     return tree;
@@ -126,7 +154,7 @@ private:
                 pPrevPtr = pTmp;
                 pTmp = pTmp->pNext;
             }
-            newElem.m_pData = pElem;
+            newElem.pData = pElem;
             newElem.pNext = NULL;
             pPrevPtr->pNext = m_ExtStorage.Add(newElem);
             return tree;
@@ -217,19 +245,20 @@ private:
     }
 
     // функция удаления элемента из дерева по ключу
-    struct treeNode *removeNode(struct treeNode *tree, T key)
+    struct treeNode *removeNode(struct treeNode *tree, T *pElem, Compare compareFunction, CalcHash calcHashFunction)
     {
+        unsigned int curhash = calcHashFunction(pElem) % KEY_SZ;
         if(tree == NULL)
             return tree;
         // ищем в правом или левом поддереве и удаляем
-        if(keyCompare(key, tree->pData->m_key) == 1)
+        if(curhash > tree->hash)
         {
-            tree->pRight = removeNode(tree->pRight, key);
+            tree->pRight = removeNode(tree->pRight, pElem, compareFunction, calcHashFunction);
             tree->height = height(tree);
             // проверяем на сбалансорованность
             if (height(tree->pLeft)- height(tree->pRight) == 2)
             {
-                if(key > tree->pLeft->pData->m_key)
+                if(curhash > tree->pLeft->hash)
                 {
                     tree = singleLeftRotate(tree);
                     return tree;
@@ -241,14 +270,14 @@ private:
                 }
             }
         }
-        if(keyCompare(key, tree->pData->m_key) == -1)
+        if(curhash < tree->hash)
         {
-            tree->pLeft = removeNode(tree->pLeft, key);
+            tree->pLeft = removeNode(tree->pLeft, pElem, compareFunction, calcHashFunction);
             tree->height = height(tree);
             // проверяем на сбалансорованность
             if (height(tree->pRight)- height(tree->pLeft) == 2)
             {
-                if(key < tree->pRight->pData->m_key)
+                if(curhash < tree->pRight->hash)
                 {
                     tree = singleRightRotate(tree);
                     return tree;
@@ -261,103 +290,117 @@ private:
             }
         }
         // если мы нашли вершину для удаления
-        if (keyCompare(key, tree->pData->m_key) == 0)
+        if (curhash == tree->hash)
         {
-            // если у неё нет детей, то удаляем
-            if (tree->pLeft == NULL && tree->pRight == NULL)
+            // Если списка доп. вершин нет, то удаляем, как из обычного avl-дерева
+            if (tree->pNext == NULL)
             {
-                if (tree->pParent->pLeft == tree)
-                    tree->pParent->pLeft = NULL;
-                else
-                    tree->pParent->pRight = NULL;
-
-                tree->pParent->height = height(tree->pParent);
-                delete tree->pData;
-                tree->pData =NULL;
-                tree->pParent = NULL;
-                delete tree;
-                tree = NULL;
-                return tree;
-            }
-            // если есть только правый ребенок, то мы переносим значения 
-            // data из ребенка в текущий элемент, зануляем ребенка и зануляем на него ссылку.
-            // так как у нас avl-дерево, то у ребенка детей быть не может
-            if (tree->pLeft == NULL && tree->pRight != NULL)
-            {
-                tree->pData->m_key = tree->pRight->pData->m_key;
-                tree->pData->m_data = tree->pRight->pData->m_data;
-                delete tree->pRight->pData;
-                tree->pRight->pData = NULL;
-                delete tree->pRight;
-                tree->pRight = NULL;
-                tree->height = 0;
-                return tree;
-            }
-            // аналогично, если нет правого ребенка
-            if (tree->pRight == NULL && tree->pLeft != NULL)
-            {
-                tree->pData->m_key = tree->pLeft->pData->m_key;
-                tree->pData->m_data = tree->pLeft->pData->m_data;
-                delete tree->pLeft->pData;
-                tree->pLeft->pData = NULL;
-                delete tree->pLeft;
-                tree->pLeft = NULL;
-                tree->height = 0;
-                return tree;
-            }
-            // если есть оба ребенка, берем самый левый элемент правого поддерева,
-            // копируем его data в текущий элемент и рекурсивно удаляем его.
-            else
-            {
-                struct treeNode *tempNode = tree->pRight;
-                struct nodeData elem;
-                // флаг. 1, если мы удаляем корневой элемент
-                int flag = 0;
-                if (tree->pParent == tree)
-                    flag = 1;
-
-                while (tempNode->pLeft != NULL)
-                    tempNode = tempNode->pLeft;
-
-                elem.m_key = tempNode->pData->m_key;
-                elem.m_data = tempNode->pData->m_data;
-                tree = removeNode(tree, tempNode->pData->m_key);
-                tree->height = height(tree);
-                tempNode = findNode(tree, key);
-                tempNode->pData->m_key = elem.m_key;
-                tempNode->pData->m_data = elem.m_data;
-                if (height(tree->pLeft)- height(tree->pRight) == 2)
+                // если у неё нет детей, то удаляем
+                if (tree->pLeft == NULL && tree->pRight == NULL)
                 {
-                    if(key > tree->pLeft->pData->m_key)
-                    {
-                        tree = singleLeftRotate(tree);
-                        if (flag)
-                            tree->pParent = tree;
-                        return tree;
-                    }
+                   /* if (tree->pParent->pLeft == tree)
+                        tree->pParent->pLeft = NULL;
                     else
+                        tree->pParent->pRight = NULL;
+
+                    tree->pParent->height = height(tree->pParent); */
+                    tree = NULL;
+                    return tree;
+                }
+                // если есть только правый ребенок, то мы переносим значения 
+                // data из ребенка в текущий элемент, зануляем ребенка и зануляем на него ссылку.
+                // так как у нас avl-дерево, то у ребенка детей быть не может
+                if (tree->pLeft == NULL && tree->pRight != NULL)
+                {
+                    tree->pData = tree->pRight->pData;
+                    tree->pRight = NULL;
+                    tree->height = 0;
+                    return tree;
+                }
+                // аналогично, если нет правого ребенка
+                if (tree->pRight == NULL && tree->pLeft != NULL)
+                {
+                    tree->pData = tree->pLeft->pData;
+                    tree->hash = tree->pLeft->hash;
+                    tree->pLeft = NULL;
+                    tree->height = 0;
+                    return tree;
+                }
+                // если есть оба ребенка, берем самый левый элемент правого поддерева,
+                // копируем его data в текущий элемент и рекурсивно удаляем его.
+                else
+                {
+                    struct treeNode *tempNode = tree->pRight;
+                    T *elem;
+                    // флаг. 1, если мы удаляем корневой элемент
+                    int flag = 0;
+                    if (tree->pParent == tree)
+                        flag = 1;
+
+                    while (tempNode->pLeft != NULL)
+                        tempNode = tempNode->pLeft;
+
+                    elem = tempNode->pData;
+                    tree = removeNode(tree, tempNode->pData, compareFunction, calcHashFunction);
+                    tree->height = height(tree);
+                    tempNode = findNode(tree, pElem, calcHashFunction);
+                    tempNode->pData = elem;
+                    if (height(tree->pLeft)- height(tree->pRight) == 2)
                     {
-                        tree = doubleLeftRotate(tree);
-                        if (flag)
-                            tree->pParent = tree;
-                        return tree;
+                        if(curhash > tree->pLeft->hash)
+                        {
+                            tree = singleLeftRotate(tree);
+                            if (flag)
+                                tree->pParent = tree;
+                            return tree;
+                        }
+                        else
+                        {
+                            tree = doubleLeftRotate(tree);
+                            if (flag)
+                                tree->pParent = tree;
+                            return tree;
+                        }
+                    }
+                    if (height(tree->pRight)- height(tree->pLeft) == 2)
+                    {
+                        if(curhash > tree->pRight->hash)
+                        {
+                            tree = singleRightRotate(tree);
+                            if (flag)
+                                tree->pParent = tree;
+                            return tree;
+                        }
+                        else
+                        {
+                            tree = doubleRightRotate(tree);
+                            if (flag)
+                                tree->pParent = tree;
+                            return tree;
+                        }
                     }
                 }
-                if (height(tree->pRight)- height(tree->pLeft) == 2)
+            }
+            else
+            {
+                if (compareFunction(tree->pData, pElem) == 0)
                 {
-                    if(key > tree->pRight->pData->m_key)
+                    external *pTmp = tree->pNext->pNext;
+                    tree->pData = tree->pNext->pData;
+                    tree->pNext = pTmp;
+                }
+                else
+                {
+                    external *pTmp = tree->pNext;   //  != NULL
+                    external *pPrev;
+                    while (compareFunction(pTmp->pData, pElem) != 0)
                     {
-                        tree = singleRightRotate(tree);
-                        if (flag)
-                            tree->pParent = tree;
-                        return tree;
-                    }
-                    else
-                    {
-                        tree = doubleRightRotate(tree);
-                        if (flag)
-                            tree->pParent = tree;
-                        return tree;
+                        pPrev = pTmp;
+                        pTmp = pTmp->pNext;
+                        if(pTmp == NULL)
+                        {
+                            return tree;
+                        }
                     }
                 }
             }
@@ -368,19 +411,20 @@ private:
 
 
     // функция поиска данных в дереве по ключу
-    struct treeNode *findNode(struct treeNode *tree, T key)
+    struct treeNode *findNode(struct treeNode *tree, T *key, CalcHash calcHashFunction)
     {
+        unsigned int curHash = calcHashFunction(key) % KEY_SZ;
         // если детей нет, то и искать негде
-        if(tree == NULL || (tree->pRight == NULL && tree->pLeft == NULL && tree->pParent == NULL))
+        if(tree == NULL)
             return NULL;
         // если ключ совпал - возвращаем
-        if(keyCompare(key, tree->pData->m_key) == 0)
+        if(curHash ==  tree->hash)
             return tree;
         // иначе ищем в поддеревьях
-        if(keyCompare(key, tree->pData->m_key) > 0)
-            return findNode(tree->pRight, key);
-        if(keyCompare(key, tree->pData->m_key) < 0)
-            return findNode(tree->pLeft, key);
+        if(curHash > tree->hash)
+            return findNode(tree->pRight, key, calcHashFunction);
+        if(curHash < tree->hash)
+            return findNode(tree->pLeft, key, calcHashFunction);
         // for avoid warning
         return NULL;
     }

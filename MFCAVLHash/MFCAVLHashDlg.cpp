@@ -33,18 +33,20 @@ CMFCAVLHashDlg::CMFCAVLHashDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CMFCAVLHashDlg::IDD, pParent)
 	, m_Key(_T(""))
 	, m_Value(_T(""))
-	, m_searchKey(_T(""))
+	, m_SearchValue(_T(""))
+    , m_DelValue(_T(""))
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
 
 void CMFCAVLHashDlg::DoDataExchange(CDataExchange* pDX)
 {
-	CDialog::DoDataExchange(pDX);
-	DDX_Text(pDX, IDC_KEYWORD, m_Key);
-	DDX_Text(pDX, IDC_VALUE, m_Value);
-	DDX_Text(pDX, IDC_KEYSEARCH, m_searchKey);
-	DDX_Control(pDX, IDC_LIST, m_outputList);
+    CDialog::DoDataExchange(pDX);
+    DDX_Text(pDX, IDC_KEYWORD, m_Key);
+    DDX_Text(pDX, IDC_VALUE, m_Value);
+    DDX_Text(pDX, IDC_KEYSEARCH, m_SearchValue);
+    DDX_Control(pDX, IDC_LIST, m_OutputList);
+    DDX_Text(pDX, IDC_EDIT1, m_DelValue);
 }
 
 BEGIN_MESSAGE_MAP(CMFCAVLHashDlg, CDialog)
@@ -52,6 +54,8 @@ BEGIN_MESSAGE_MAP(CMFCAVLHashDlg, CDialog)
 	ON_WM_QUERYDRAGICON()
 	//}}AFX_MSG_MAP
     ON_BN_CLICKED(IDC_BTNADD, &CMFCAVLHashDlg::OnBnClickedBtnadd)
+    ON_BN_CLICKED(IDC_BTNFIND, &CMFCAVLHashDlg::OnBnClickedBtnfind)
+    ON_BN_CLICKED(IDC_BTNDEL, &CMFCAVLHashDlg::OnBnClickedBtndel)
 END_MESSAGE_MAP()
 
 
@@ -140,5 +144,56 @@ void CMFCAVLHashDlg::OnBnClickedBtnadd()
     }
     m_Key.Empty();
     m_Value.Empty();
+    UpdateData(FALSE);
+}
+
+void CMFCAVLHashDlg::OnBnClickedBtnfind()
+{
+    int i = 0;
+    Data elem;
+    Data *retVal;
+    if(!UpdateData(TRUE))
+        return;
+
+    if(m_SearchValue.IsEmpty())
+    {
+        AfxMessageBox("Вы забыли заполнить поле ключа для поиска!");
+        return;
+    }
+    m_OutputList.ResetContent();
+
+    // выделяем память на структуру данных
+    elem.key = m_SearchValue;
+
+    retVal = tree.FindElem(&elem, compare, calcHash);
+    m_SearchValue.Empty();
+    if (retVal != NULL)
+        m_OutputList.AddString(retVal->value);	
+    else
+        m_OutputList.AddString("0 elem found.");
+    UpdateData(FALSE);
+}
+
+void CMFCAVLHashDlg::OnBnClickedBtndel()
+{
+    int i = 0;
+    Data elem;
+    if(!UpdateData(TRUE))
+        return;
+
+    if(m_DelValue.IsEmpty())
+    {
+        AfxMessageBox("Вы забыли заполнить поле ключа для удаления!");
+        return;
+    }
+    m_OutputList.ResetContent();
+
+    // выделяем память на структуру данных
+    elem.key = m_DelValue;
+
+    if(tree.DelElem(&elem, compare, calcHash) != 0)
+        m_OutputList.AddString("No elements found");
+
+    m_DelValue.Empty();
     UpdateData(FALSE);
 }

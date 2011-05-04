@@ -38,10 +38,15 @@ private:
 	CAvlTree<Data> tree;
 	CString m_Key;
 	CString m_Value;
-	CString m_searchKey;
-	CListBox m_outputList;
+	CString m_SearchValue;
+	CListBox m_OutputList;
     // Хранилище
     CBasicDataBase<Data> m_DataStorage;
 public:
     afx_msg void OnBnClickedBtnadd();
+    afx_msg void OnBnClickedBtnfind();
+private:
+    CString m_DelValue;
+public:
+    afx_msg void OnBnClickedBtndel();
 };
