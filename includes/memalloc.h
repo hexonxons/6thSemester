@@ -1,4 +1,13 @@
-#pragma once
+/*
+ *  memalloc.h
+ *  memory manager with alerts of banned functions.
+ *  4 May 2011
+ *  Hexonxonx
+ */
+
+#ifndef __MEMALLOC_H__
+#define __MEMALLOC_H__
+
 #include "banned.h"
 
 // размер блока
@@ -158,3 +167,5 @@ private:
 	// количество элементов в листе
 	unsigned int m_elemCount;
 };
+
+#endif  // memalloc.h
