@@ -83,8 +83,7 @@ EXSTYLE WS_EX_APPWINDOW
 CAPTION "Список"
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    DEFPUSHBUTTON   "OK",IDOK,180,174,50,14
-    PUSHBUTTON      "Cancel",IDCANCEL,238,174,50,14
+    DEFPUSHBUTTON   "Выход",IDOK,199,177,50,14
     EDITTEXT        IDC_FIO,54,6,228,12,ES_AUTOHSCROLL
     LTEXT           "ФИО",IDC_STATIC,18,6,36,12
     LTEXT           "Заказ",IDC_STATIC,18,24,36,12
@@ -95,7 +94,7 @@ BEGIN
     PUSHBUTTON      "Вывести список",IDC_LISTBTN,168,114,120,14
     PUSHBUTTON      "Добавить в конец",IDC_ADDENDBTN,168,60,120,14
     PUSHBUTTON      "Удалить из конца",IDC_DELENDBTN,168,96,120,14
-    PUSHBUTTON      "Вывести содержимое памяти",IDC_DEBUGSTORAGEBTN,180,156,108,14
+    PUSHBUTTON      "Вывести содержимое памяти",IDC_DEBUGSTORAGEBTN,168,154,120,14
 END
 
 

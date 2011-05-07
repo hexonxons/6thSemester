@@ -120,12 +120,12 @@ public:
 		if(m_pBegin->pNext != NULL)
 		{
 			m_pBegin = m_pBegin->pNext;
-			free(m_pBegin->pPrev);
+			delete m_pBegin->pPrev;
 			m_pBegin->pPrev = NULL;
 		}
 		else
 		{
-			free(m_pBegin);
+			delete m_pBegin;
 			m_pBegin = NULL;
 			m_pEnd = NULL;
 		}
@@ -139,12 +139,12 @@ public:
 		if(m_pEnd->pPrev != NULL)
 		{
 			m_pEnd = m_pEnd->pPrev;
-			free(m_pEnd->pNext);
+			delete m_pEnd->pNext;
 			m_pEnd->pNext = NULL;
 		}
 		else
 		{
-			free(m_pEnd);
+			delete m_pEnd;
 			m_pEnd = NULL;
 			m_pBegin = NULL;
 		}
