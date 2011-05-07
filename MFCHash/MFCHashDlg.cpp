@@ -13,7 +13,20 @@
 // CMFCHashDlg dialog
 
 
+int compare(Data *pLeft, Data *pRight)
+{
+    return strcmp(pLeft->key, pRight->key);
+}
 
+// функция вычисления хэша по строке
+int calcHash(Data *pElem)
+{
+    int i;
+    unsigned int hash = 0;
+    for(i = 0; i < pElem->key.GetLength(); i++)
+        hash += pElem->key[i];
+    return hash;
+}
 
 CMFCHashDlg::CMFCHashDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CMFCHashDlg::IDD, pParent)
@@ -21,6 +34,7 @@ CMFCHashDlg::CMFCHashDlg(CWnd* pParent /*=NULL*/)
 	, m_Value(_T(""))
 	, m_SearchValue(_T(""))
 	, m_DelValue(_T(""))
+    , table(100, calcHash, compare)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -97,21 +111,6 @@ HCURSOR CMFCHashDlg::OnQueryDragIcon()
 	return static_cast<HCURSOR>(m_hIcon);
 }
 
-int compare(Data *pLeft, Data *pRight)
-{
-	return strcmp(pLeft->key, pRight->key);
-}
-
-// функция вычисления хэша по строке
-int calcHash(Data *pElem)
-{
-	int i;
-	unsigned int hash = 0;
-	for(i = 0; i < pElem->key.GetLength(); i++)
-		hash += pElem->key[i];
-	return hash;
-}
-
 void CMFCHashDlg::OnBnClickedBtnadd()
 {
 	Data elem;
@@ -136,7 +135,7 @@ void CMFCHashDlg::OnBnClickedBtnadd()
 	// выделяем память на структуру данных
 	//m_DataStorage.Add(elem);
 
-	table.AddElem(m_DataStorage.Add(elem), compare, calcHash);
+	table.AddElem(m_DataStorage.Add(elem));
 	if (table.getLastError() == 2)
 	{
 		AfxMessageBox("Значение с таким ключом уже существует!");
@@ -165,7 +164,7 @@ void CMFCHashDlg::OnBnClickedBtnfind()
 	// выделяем память на структуру данных
 	elem.key = m_SearchValue;
 
-	retVal = table.FindElem(&elem, compare, calcHash);
+	retVal = table.FindElem(&elem);
 	m_SearchValue.Empty();
 	if (retVal != NULL)
 		m_OutputList.AddString(retVal->value);	
@@ -191,7 +190,7 @@ void CMFCHashDlg::OnBnClickedBtndel()
 	// выделяем память на структуру данных
 	elem.key = m_DelValue;
 
-	if(table.DelElem(&elem, compare, calcHash) != 0)
+	if(table.DelElem(&elem) != 0)
 		m_OutputList.AddString("No elements found");
 
 	m_DelValue.Empty();

@@ -44,14 +44,8 @@ private:
 	CListBox m_OutputList;
 	CString m_DelValue;
 	// хэш ничего не знает о том, где лежат данные
-	// хэш - hashTable.h
-	// а это - интерфейс. Ему знать можно
 	CBasicDataBase<CHashTable<Data>::STableElem> m_HashStorage; 
 	// а это - хранилище для строчек. 
-	// CHashTable<string>::STableElem * имеет внутри поля
-	// T *elem	и T *key;
-	// и на них тоже надо выделять память. Мой memman не умеет выделять память на внутренние элементы =(
-	// как я понимаю, надо делать так.
 	CBasicDataBase<CString> m_stringStorage; 
 	// Хранилище
 	CBasicDataBase<Data> m_DataStorage;
