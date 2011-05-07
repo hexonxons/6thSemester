@@ -33,6 +33,7 @@ public:
 			m_posInBlock = 0;
 			m_blockNum = 0;
 			m_elemCount = elem->m_elemCount;
+			m_lastError = 0;
 		}
 
 		T *Next()
@@ -166,6 +167,8 @@ private:
 	unsigned int m_blockCount;
 	// количество элементов в листе
 	unsigned int m_elemCount;
+	// последн€€ ошибка
+	unsigned int m_lastError;
 };
 
 #endif  // memalloc.h
