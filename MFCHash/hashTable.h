@@ -1,8 +1,14 @@
 #pragma once
 #include "../includes/memalloc.h"
 
+#ifdef _DEBUG
+	#include <crtdbg.h>
+	#define new new(__FILE__,__LINE__)
+#endif
+
+
 // максимальный ключ
-const unsigned int KEY_SZ = 100;
+const unsigned int KEY_SZ = 2;
 
 template<class T> class CHashTable
 {
@@ -28,7 +34,29 @@ public:
 
 	virtual ~CHashTable()
 	{
-		delete[] m_pTable;
+		int i;
+		STableElem *ptr;
+		STableElem *pPrev;
+		if(m_lastError != -1)
+		{
+			for(i = 0; i < KEY_SZ; ++i)
+			{
+				if(m_pTable[i].pNext != NULL)
+				{
+					pPrev = m_pTable[i].pNext;
+					ptr = pPrev->pNext;
+					while(ptr != NULL)
+					{
+						delete pPrev;
+						pPrev = ptr;
+						ptr = ptr->pNext;
+					}
+					delete pPrev;
+				}
+			}
+			delete[] m_pTable;
+		}
+		m_pTable = NULL;		
 	}
 
 	// функция сравнения
@@ -37,18 +65,20 @@ public:
 	typedef int (CalcHash)(T *pElem);
 
 	// функция добавления элемента в хэш-таблицу
+	//	Код возврата дублирует переменную m_lastError в классе
+	//	Получение ошибки - getLastError()
+	//	m_lastError = 2 - элемент существует
+	//	m_lastError = 0 - все прошло нормально
+	//
 	int AddElem(T *pElem, Compare compareFunction, CalcHash calcHashFunction)
 	{
 		unsigned int hash = 0;
 		// указатель, куда надо вставлять
-		STableElem *ptr;
-		STableElem *pTemp;
-		STableElem elem;
-
-		elem.pElem = pElem;
-		elem.pNext = NULL;
+		STableElem *ptr = NULL;
+		STableElem *pTemp = NULL;
 
 		hash = calcHashFunction(pElem) % KEY_SZ;
+		// Если по этому индексу ничего не лежит
 		if(m_pTable[hash].pElem == NULL)
 			m_pTable[hash].pElem = pElem;
 		else
@@ -63,41 +93,52 @@ public:
 			}
 			while(ptr != NULL)
 			{
-				ptr = ptr->pNext;
 				// если такой ключ уже есть, то возвращаем 2
-				if(compareFunction(pTemp->pElem, pElem) == 0)
+				if(compareFunction(ptr->pElem, pElem) == 0)
 				{
 					m_lastError = 2;
 					return 2;
 				}
+				ptr = ptr->pNext;
 				pTemp = pTemp->pNext;
 			}
-			ptr = m_externalPointersStorage.Add(elem);
 			// добавление в массив указаделей дополнительных выделенных кусков памяти
 			//m_ptrToExternalPointers.Add(ptrToIns);
-			pTemp->pNext = ptr;
+			pTemp->pNext = new STableElem;
+			pTemp->pNext->pNext = NULL;
+			pTemp->pNext->pElem = pElem;
 		}
 		return 0;
 	}
 
 	// функция удаления элемента по ключу
+	//	Код возврата дублирует переменную m_lastError в классе
+	//	Получение ошибки - getLastError()
+	//	m_lastError = 2 - элемента не существует
+	//	m_lastError = 0 - все прошло нормально
+	//
 	int DelElem(T* pElem, Compare compareFunction, CalcHash calcHashFunction)
 	{
-		unsigned int hash;
-		STableElem *ptr;
-		STableElem *pTemp;
+		unsigned int hash = 0;
+		STableElem *ptr = NULL;
+		STableElem *pTemp = NULL;
 
 		hash = calcHashFunction(pElem) % KEY_SZ;
 		// получаем указатель на элемент в таблице с хэшем, равным полученному
 		pTemp = &m_pTable[hash];
-		if (pTemp->pElem == NULL)
+		ptr = m_pTable[hash].pNext;
+		if (pTemp->pElem == NULL )
 		{
 			return 2;
 		}
 
 		if (compareFunction(pTemp->pElem, pElem) != 0)
 		{
-			ptr = m_pTable[hash].pNext;
+			if(ptr == NULL)
+			{
+				m_lastError = 2;
+				return 2;
+			}
 			while (compareFunction(ptr->pElem, pElem) != 0)
 			{
 				pTemp = ptr;
@@ -110,14 +151,19 @@ public:
 			}
 			pTemp->pNext = ptr->pNext;
 			pTemp->pElem = ptr->pElem;
+			delete ptr;
+			ptr = NULL;
 			return 0;
 		}
-		if (compareFunction(pTemp->pElem, pElem) == 0)
+		else
 		{
 			if (m_pTable[hash].pNext != NULL)
 			{
-				m_pTable[hash].pElem = m_pTable[hash].pNext->pElem;
-				m_pTable[hash].pNext = m_pTable[hash].pNext->pNext;
+				ptr = m_pTable[hash].pNext;
+				m_pTable[hash].pElem = ptr->pElem;
+				m_pTable[hash].pNext = ptr->pNext;
+				delete ptr;
+				ptr = NULL;
 			}
 			else
 			{
@@ -159,7 +205,7 @@ public:
 private:
 	
 	STableElem *m_pTable;
-	CBasicDataBase<STableElem> m_externalPointersStorage;
+	//CBasicDataBase<STableElem> m_externalPointersStorage;
 	// Хранилище указателей на дополнительно выделенные элементы
 	// в случае коллизии
 	//CArray <STableElem *> m_ptrToExternalPointers;
