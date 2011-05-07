@@ -340,6 +340,10 @@
 			Filter="h;hpp;hxx;hm;inl"
 			>
 			<File
+				RelativePath=".\mergesort.h"
+				>
+			</File>
+			<File
 				RelativePath="PerfCounter.h"
 				>
 			</File>

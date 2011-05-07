@@ -6,6 +6,7 @@
 #include "sortDlg.h"
 #include "perfcounter.h"
 #include "../includes/banned.h"
+#include "mergesort.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -257,66 +258,11 @@ int CompareByDate(Sort1 *left, Sort1 *right)
 	return left->Date.CompareNoCase(right->Date) < 0;
 }
 
-
-void Heapify(Sort1 **arr, unsigned int top, unsigned int heapSz, CompareSort1Type cmpFunc)
-{
-	unsigned int left;
-	unsigned int right;
-	unsigned int largest;
-	Sort1 *temp;
-	
-	left = (top << 1) + 1;	//Left
-	right = left + 1; 		//Right
-	
-	if(left < heapSz && cmpFunc(arr[left], arr[top]) > 0)
-		largest = left;
-	else
-		largest = top;
-		
-	if(right < heapSz && cmpFunc(arr[right], arr[largest]) > 0)
-		largest = right;
-		
-	if(largest != top)
-	{
-		temp = arr[top];
-		arr[top] = arr[largest];
-		arr[largest] = temp;
-		Heapify(arr, largest, heapSz, cmpFunc);
-	}
-}
-
-void BuildMaxHeap(Sort1 **arr, unsigned int heapSz, CompareSort1Type cmpFunc)
-{
-	unsigned int i = heapSz >> 1;
-	while(i > 0)
-	{
-		--i;
-		Heapify(arr, i, heapSz, cmpFunc);
-	}
-}
-
-Sort1** HeapSort(Sort1 **arr, unsigned int sz, CompareSort1Type cmpFunc)
-{
-	unsigned int i;
-	unsigned int heapSz = sz;
-	Sort1 *temp;
-	
-	BuildMaxHeap(arr, sz, cmpFunc);
-	i = sz;
-	while(i > 0)
-	{
-		--i;
-		--heapSz;
-		temp = arr[i];
-		arr[i] = arr[0];
-		arr[0] = temp;
-		Heapify(arr, 0, heapSz, cmpFunc);
-	}
-	return arr;
-}
-
 ///Сортировка
 void Sort(Sort1Array &array, CompareSort1Type cmpFunc)
 {
-	HeapSort(array.GetData(), array.GetSize(), cmpFunc);
+    if (array.GetSize() != 0)
+    {
+	    MergeSort(array.GetData(), array.GetData() + array.GetSize(), cmpFunc);
+    }
 }
