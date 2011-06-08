@@ -11,7 +11,7 @@
 #include "banned.h"
 
 // размер блока
-const int BLOCK_SIZE = 10;
+const int BLOCK_SIZE = 2;
 
 template<class T> class CBasicDataBase
 {
@@ -33,8 +33,15 @@ public:
 			m_posInBlock = 0;
 			m_blockNum = 0;
 			m_elemCount = elem->m_elemCount;
-			m_lastError = 0;
 		}
+        virtual ~Iterator()
+        {
+            m_pData = NULL;
+            m_posInBlock = 0;
+            m_blockNum = 0;
+            m_blockCount = 0;
+            m_elemCount = 0;
+        }
 
 		T *Next()
 		{
@@ -115,6 +122,38 @@ public:
 			m_pBegin = NULL;
 		}
 	}
+
+    //for tester
+    int destroy()
+    {
+        if (m_pData != NULL)
+        {
+            Storage *pTmp;
+            m_pData = m_pBegin;
+            // идем на блок вперед и удаляем предыдущий
+            while(m_pData->pNext)
+            {
+                pTmp = m_pData;
+                m_pData = m_pData->pNext;
+                if(pTmp->pData)
+                {
+                    delete[] pTmp->pData;
+                    pTmp->pData = NULL;
+                }
+                delete pTmp;
+                pTmp = NULL;
+            }
+            delete[] m_pData->pData;
+            m_pData->pData = NULL;
+            delete m_pData;
+            m_pData = NULL;
+            m_pBegin = NULL;
+        }
+        m_freeBlockNum = 0;
+        m_blockCount = 0;
+        m_elemCount = 0;
+        return 0;
+    }
 	// функция добавления элемента в лист
 	T* Add(T& elem)
 	{
@@ -171,4 +210,4 @@ private:
 	unsigned int m_lastError;
 };
 
-#endif  // memalloc.h
+#endif  // __MEMALLOC_H__

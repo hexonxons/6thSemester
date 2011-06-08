@@ -1,4 +1,5 @@
-#pragma once
+#ifndef __AVLTREE_H__
+#define  __AVLTREE_H__
 
 #include "../includes/memalloc.h"
 
@@ -10,30 +11,38 @@
 template<class T> class CAvlTree
 {
 public:
-	CAvlTree()
+    // функция сравнения
+    typedef  int (*Compare)(T *pElem1, T *pElem2);
+
+	CAvlTree(Compare compareFunction)
 	{
 		m_pRoot = NULL;
+        m_compareFunction = compareFunction;
 	}
 
     virtual ~CAvlTree()
     {
-        deleteNode(m_pRoot);
+        destroy();
     }
 
-    // функция сравнения
-    typedef  int (Compare)(T *pElem1, T *pElem2);
+    int destroy()
+    {
+        deleteNode(m_pRoot);
+        m_pRoot = NULL;
+        return 0;
+    }
 
     // функция добавления элемента в хэш-таблицу
-    T *AddElem(T *pElem, Compare compareFunction)
+    T *AddElem(T *pElem)
     {
-        m_pRoot = insertNode(m_pRoot, pElem, compareFunction);
+        m_pRoot = insertNode(m_pRoot, pElem);
         return m_pRoot->pData;
     }
 
     // функция удаления элемента по ключу
-    int DelElem(T* pElem, Compare compareFunction)
+    int DelElem(T* pElem)
     {
-        m_pRoot = removeNode(m_pRoot, pElem, compareFunction);
+        m_pRoot = removeNode(m_pRoot, pElem);
         return 0;
     }
 
@@ -45,9 +54,9 @@ public:
     }
 
     // функция поиска элемента по ключу
-    T *FindElem(T* pKeyWord, Compare compareFunction)
+    T *FindElem(T* pKeyWord)
     {
-        treeNode *fndElem = findNode(m_pRoot, pKeyWord, compareFunction);
+        treeNode *fndElem = findNode(m_pRoot, pKeyWord);
         // Если не найдено значение, возвращаем NULL
         if (fndElem == NULL)
         {
@@ -84,39 +93,25 @@ private:
     // удаляет поддерево нода и сам нод
     int deleteNode(treeNode *node)
     {
-       if(node->pLeft == NULL && node->pRight == NULL)
-       {
-           delete node;
-           node = NULL;
+       if (node == NULL)
            return 0;
-       }
-       if (node->pLeft != NULL && node->pRight == NULL)
-       {
-           deleteNode(node->pLeft);
-           delete node;
-           node = NULL;
-           return 0;
-       }
-       if(node->pRight != NULL && node->pLeft == NULL)
+       if(node->pRight != NULL)
        {
            deleteNode(node->pRight);
-           delete node;
-           node = NULL;
-           return 0;
+           node->pRight = NULL;
        }
-       if (node->pRight != NULL && node->pLeft != NULL)
+       if (node->pRight != NULL)
        {
-           deleteNode(node->pRight);
            deleteNode(node->pLeft);
-           delete node;
-           node = NULL;
-           return 0;
+           node->pLeft = NULL;
        }
-       return -1;
+       delete node;
+       node = NULL;
+       return 0;
     }
 
     // функция вставки элемента в дерево
-    struct treeNode *insertNode(struct treeNode *tree, T *pElem, Compare compareFunction)
+    struct treeNode *insertNode(struct treeNode *tree, T *pElem)
     {
         if (tree == NULL)
         {
@@ -125,25 +120,25 @@ private:
             tree->pData = pElem;
             return tree;
         }
-        if (compareFunction(pElem, tree->pData) == 0)
+        if (m_compareFunction(pElem, tree->pData) == 0)
         {
             m_lastError = 2;
             return tree;
         }
         // если ключ > ключа в дереве
-        if (compareFunction(pElem, tree->pData) != -1)
+        if (m_compareFunction(pElem, tree->pData) != -1)
         {
             // если есть дети у вершины
             if(tree->pRight != NULL)
             {
                 // вставляем в правое поддерево
-                tree->pRight = insertNode(tree->pRight, pElem, compareFunction);
+                tree->pRight = insertNode(tree->pRight, pElem);
                 tree->height = height(tree);
 
                 // проверяем на сбалансированность
                 if (checkBalance(tree) == 2)
                 {
-                    if(compareFunction(pElem,tree->pRight->pData) != -1)
+                    if(m_compareFunction(pElem,tree->pRight->pData) != -1)
                     {
                         tree = singleRightRotate(tree);
                         return tree;
@@ -170,17 +165,17 @@ private:
             }
         }
         // если ключ < ключа в дереве
-        if (compareFunction(pElem, tree->pData) == -1)
+        if (m_compareFunction(pElem, tree->pData) == -1)
         {
             if(tree->pLeft != NULL)
             {
                 // вставляем в левое поддерево
-                tree->pLeft = insertNode(tree->pLeft, pElem, compareFunction);	
+                tree->pLeft = insertNode(tree->pLeft, pElem);	
                 tree->height = height(tree);
                 // проверяем на сбалансорованность
                 if (checkBalance(tree) == 2)
                 {
-                    if(compareFunction(pElem, tree->pLeft->pData) == -1)
+                    if(m_compareFunction(pElem, tree->pLeft->pData) == -1)
                     {
                         tree = singleLeftRotate(tree);
                         return tree;
@@ -210,19 +205,19 @@ private:
     }
 
     // функция удаления элемента из дерева по ключу
-    struct treeNode *removeNode(struct treeNode *tree, T *pElem, Compare compareFunction)
+    struct treeNode *removeNode(struct treeNode *tree, T *pElem)
     {
         if(tree == NULL)
             return tree;
         // ищем в правом или левом поддереве и удаляем
-        if(compareFunction(pElem, tree->pData) == 1)
+        if(m_compareFunction(pElem, tree->pData) == 1)
         {
-            tree->pRight = removeNode(tree->pRight, pElem, compareFunction);
+            tree->pRight = removeNode(tree->pRight, pElem);
             tree->height = height(tree);
             // проверяем на сбалансорованность
             if (height(tree->pLeft)- height(tree->pRight) == 2)
             {
-                if(compareFunction(pElem, tree->pLeft->pData) == 1)
+                if(m_compareFunction(pElem, tree->pLeft->pData) == 1)
                 {
                     tree = singleLeftRotate(tree);
                     return tree;
@@ -234,14 +229,14 @@ private:
                 }
             }
         }
-        if(compareFunction(pElem, tree->pData) == -1)
+        if(m_compareFunction(pElem, tree->pData) == -1)
         {
-            tree->pLeft = removeNode(tree->pLeft, pElem, compareFunction);
+            tree->pLeft = removeNode(tree->pLeft, pElem);
             tree->height = height(tree);
             // проверяем на сбалансорованность
             if (height(tree->pRight)- height(tree->pLeft) == 2)
             {
-                if(compareFunction(pElem, tree->pRight->pData) == -1)
+                if(m_compareFunction(pElem, tree->pRight->pData) == -1)
                 {
                     tree = singleRightRotate(tree);
                     return tree;
@@ -254,7 +249,7 @@ private:
             }
         }
         // если мы нашли вершину для удаления
-        if (compareFunction(pElem, tree->pData) == 0)
+        if (m_compareFunction(pElem, tree->pData) == 0)
         {
             // если у неё нет детей, то удаляем
             if (tree->pLeft == NULL && tree->pRight == NULL)
@@ -308,13 +303,13 @@ private:
                     tempNode = tempNode->pLeft;
 
                 elem = tempNode->pData;
-                tree = removeNode(tree, tempNode->pData, compareFunction);
+                tree = removeNode(tree, tempNode->pData);
                 tree->height = height(tree);
-                tempNode = findNode(tree, pElem, compareFunction);
+                tempNode = findNode(tree, pElem);
                 tempNode->pData = elem;
                 if (height(tree->pLeft)- height(tree->pRight) == 2)
                 {
-                    if(compareFunction(pElem, tree->pLeft->pData) == 1)
+                    if(m_compareFunction(pElem, tree->pLeft->pData) == 1)
                     {
                         tree = singleLeftRotate(tree);
                         if (flag)
@@ -331,7 +326,7 @@ private:
                 }
                 if (height(tree->pRight)- height(tree->pLeft) == 2)
                 {
-                    if(compareFunction(pElem, tree->pRight->pData) == 1)
+                    if(m_compareFunction(pElem, tree->pRight->pData) == 1)
                     {
                         tree = singleRightRotate(tree);
                         if (flag)
@@ -354,21 +349,19 @@ private:
 
 
     // функция поиска данных в дереве по ключу
-    struct treeNode *findNode(struct treeNode *tree, T *key, Compare compareFunction)
+    struct treeNode *findNode(struct treeNode *tree, T *key)
     {
         // если детей нет, то и искать негде
         if(tree == NULL)
             return NULL;
         // если ключ совпал - возвращаем
-        if(compareFunction(key, tree->pData) == 0)
+        if(m_compareFunction(key, tree->pData) == 0)
             return tree;
         // иначе ищем в поддеревьях
-        if(compareFunction(key, tree->pData) == 1)
-            return findNode(tree->pRight, key, compareFunction);
-        if(compareFunction(key, tree->pData) == -1)
-            return findNode(tree->pLeft, key, compareFunction);
-        // for avoid warning
-        return NULL;
+        if(m_compareFunction(key, tree->pData) == 1)
+            return findNode(tree->pRight, key);
+        if(m_compareFunction(key, tree->pData) == -1)
+            return findNode(tree->pLeft, key);
     }
 
 
@@ -476,8 +469,11 @@ private:
     int m_lastError;
     // хранилище treeNode
     CBasicDataBase<treeNode> m_NodeStorage;
+    Compare m_compareFunction;
 };
 
 #ifdef _DEBUG
     #undef new
 #endif
+
+#endif  // __AVLTREE_H__

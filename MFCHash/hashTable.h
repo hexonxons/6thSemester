@@ -1,4 +1,5 @@
-#pragma once
+#ifndef __HASHTABLE_H__
+#define  __HASHTABLE_H__
 
 #include "../includes/memalloc.h"
 
@@ -22,6 +23,11 @@ public:
 		struct STableElem *pNext;
 		T *pElem;
 	};
+    
+    long getCollisionCount()
+    {
+        return m_numOfCollissions;
+    }
 
 	CHashTable(unsigned int keySz, CalcHash calcHashFunction, Compare compareFunction)
 	{
@@ -67,7 +73,45 @@ public:
 		m_pTable = NULL;		
 	}
 
-	
+    // for tests
+	int deleteTable()
+    {
+        unsigned int i;
+        STableElem *ptr;
+        STableElem *pPrev;
+        if(m_lastError != -1)
+        {
+            for(i = 0; i < m_keySz; ++i)
+            {
+                if(m_pTable[i].pNext != NULL)
+                {
+                    pPrev = m_pTable[i].pNext;
+                    ptr = pPrev->pNext;
+                    while(ptr != NULL)
+                    {
+                        delete pPrev;
+                        pPrev = ptr;
+                        ptr = ptr->pNext;
+                    }
+                    delete pPrev;
+                }
+            }
+            delete[] m_pTable;
+        }
+        m_pTable = NULL;
+
+        m_pTable = new STableElem[m_keySz];
+        if (!m_pTable)
+            m_lastError = -1;
+        else
+        {
+            // зануляем таблицу
+            memset(m_pTable, 0, m_keySz * sizeof(struct STableElem));
+            m_lastError = 0;
+        }
+        m_numOfCollissions = 0;
+        return 0;
+    }
 
 	// функция добавления элемента в хэш-таблицу
 	//	Код возврата дублирует переменную m_lastError в классе
@@ -222,3 +266,5 @@ private:
 #ifdef _DEBUG
     #undef new
 #endif
+
+#endif  // __HASHTABLE_H__

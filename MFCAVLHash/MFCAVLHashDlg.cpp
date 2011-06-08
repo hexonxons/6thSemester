@@ -35,6 +35,7 @@ CMFCAVLHashDlg::CMFCAVLHashDlg(CWnd* pParent /*=NULL*/)
 	, m_Value(_T(""))
 	, m_SearchValue(_T(""))
     , m_DelValue(_T(""))
+    , tree(compare)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -136,7 +137,7 @@ void CMFCAVLHashDlg::OnBnClickedBtnadd()
     // выделяем память на структуру данных
     //m_DataStorage.Add(elem);
 
-    tree.AddElem(m_DataStorage.Add(elem), compare);
+    tree.AddElem(m_DataStorage.Add(elem));
     if (tree.getLastError() == 2)
     {
         AfxMessageBox("Значение с таким ключом уже существует!");
@@ -165,7 +166,7 @@ void CMFCAVLHashDlg::OnBnClickedBtnfind()
     // выделяем память на структуру данных
     elem.key = m_SearchValue;
 
-    retVal = tree.FindElem(&elem, compare);
+    retVal = tree.FindElem(&elem);
     m_SearchValue.Empty();
     if (retVal != NULL)
         m_OutputList.AddString(retVal->value);	
@@ -191,7 +192,7 @@ void CMFCAVLHashDlg::OnBnClickedBtndel()
     // выделяем память на структуру данных
     elem.key = m_DelValue;
 
-    if(tree.DelElem(&elem, compare) != 0)
+    if(tree.DelElem(&elem) != 0)
         m_OutputList.AddString("No elements found");
 
     m_DelValue.Empty();
